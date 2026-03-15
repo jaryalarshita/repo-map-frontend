@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 /** Base URL pulled from env or falling back to local dev server. */
-const BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const BASE_URL ='https://repo-backend-map.vercel.app';
 
 // ─── Helpers ───────────────────────────────────────────────────
 
