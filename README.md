@@ -1,16 +1,89 @@
-# React + Vite
+# RepoMap
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+RepoMap turns a public GitHub repository into an interactive 3D dependency map. Enter a repository URL, wait for the analysis stream to finish, and explore the resulting codebase as a graph of folders, files, and imports.
 
-Currently, two official plugins are available:
+The app provides:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- A streamed repository-analysis loading view.
+- A 3D force-directed graph of the repository hierarchy and relationships.
+- A file explorer for expanding folders and selecting files.
+- Search across all analyzed files, with camera focus on visible results.
+- Frontend, backend, and configuration group colors and filters.
+- File metadata, AI-generated summaries, connections, and source previews in the sidebar.
 
-## React Compiler
+## Repository layout
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```text
+.
+├── frontend/       # React + Vite client application
+└── backend/        # Reserved for the API service
+```
 
-## Expanding the ESLint configuration
+The current checkout contains the frontend application. The backend is expected to expose the analysis, summary, and file-content endpoints described below.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Requirements
+
+- Node.js 18 or newer
+- npm
+- A running RepoMap backend, or access to the configured deployed backend
+
+## Frontend setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Open the URL printed by Vite, normally `http://localhost:5173`.
+
+Available commands from `frontend/`:
+
+```bash
+npm run dev       # Start the Vite development server
+npm run build     # Create a production build
+npm run preview   # Preview the production build locally
+npm run lint      # Run ESLint
+```
+
+## Configuration
+
+`frontend/.env` contains the API base URL:
+
+```dotenv
+VITE_API_URL=http://localhost:3001
+```
+
+Do not commit `.env` or credentials. `.env.example` is the safe template for local setup.
+
+## Backend API contract
+
+The frontend expects these endpoints at the configured API base URL:
+
+- `GET /api/analyze/stream?url=<github-repository-url>`: Server-Sent Events with `progress`, `result`, and `error` events.
+- `POST /api/analyze`: Non-SSE fallback accepting `{ "url": "..." }`.
+- `GET /api/summary?path=<file-path>&url=<github-repository-url>`: Returns `{ "summary": "..." }`.
+- `GET /api/file-content?path=<file-path>`: Returns file content, line count, and language for the active repository.
+
+Analysis results use this shape:
+
+```json
+{
+  "nodes": [],
+  "links": []
+}
+```
+
+Each node should include an `id`, `type`, `parent`, and display metadata such as `label` or `group`. Links should identify `source`, `target`, and optionally `type`.
+
+## Deployment
+
+Build the frontend from its directory:
+
+```bash
+cd frontend
+npm run build
+```
+
+Configure the hosting provider's project root or base directory as `frontend/`, and set `VITE_API_URL` to the deployed backend URL. The backend must allow requests from the deployed frontend origin, including SSE connections.
